@@ -1,17 +1,19 @@
-// src/chatbot/MessageParser.js
 class MessageParser {
-    constructor(actionProvider) {
-      this.actionProvider = actionProvider;
+  constructor(actionProvider) {
+    this.actionProvider = actionProvider;
+  }
+
+  parse(message) {
+    const lowerCaseMessage = message.toLowerCase();
+
+    if (lowerCaseMessage.includes("hello")) {
+      this.actionProvider.greet();
     }
-  
-    parse(message) {
-      const lowerCaseMessage = message.toLowerCase();
-  
-      if (lowerCaseMessage.includes("hello")) {
-        this.actionProvider.greet();
-      }
+
+    if (lowerCaseMessage.includes("upload")) {
+      this.actionProvider.sendFileUploadWidget();
     }
   }
-  
-  export default MessageParser;
-  
+}
+
+export default MessageParser;

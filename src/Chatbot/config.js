@@ -1,10 +1,17 @@
+// config.js
 import { createChatBotMessage } from 'react-chatbot-kit';
 import ActionProvider from './actionProvider';
 import MessageParser from './messageParser';
+import FileUploadWidget from '../Components/fileUploadWidget'; // Adjust the path
 
 const config = {
   botName: 'ChatBot',
-  initialMessages: [createChatBotMessage('Hello! How can I help you today?')],
+  initialMessages: [
+    createChatBotMessage('Hello! How can I help you today?'),
+    createChatBotMessage('Please upload a file using the widget below:', {
+      widget: 'fileUploadWidget',
+    }),
+  ],
   customComponents: {},
   customStyles: {
     botMessageBox: {
@@ -14,9 +21,15 @@ const config = {
       backgroundColor: '#5ccc9d',
     },
   },
-  widgets: [],
+  widgets: [
+    {
+      widgetName: 'fileUploadWidget',
+      widgetFunc: (props) => <FileUploadWidget {...props} />,
+      mapStateToProps: ["messages"],
+    },
+  ],
   state: {},
-  actionProvider: ActionProvider,   
+  actionProvider: ActionProvider,
   messageParser: MessageParser,
 };
 

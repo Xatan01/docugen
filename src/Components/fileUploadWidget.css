@@ -1,0 +1,18 @@
+/* src/FileUploadWidget.css */
+.file-upload-widget {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+  
+  .file-upload-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  #file-upload {
+    display: none;
+  }
+  
