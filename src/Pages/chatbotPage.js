@@ -1,46 +1,28 @@
 // src/Chatbot.js
 import React, { useState } from 'react';
 import FileUploadWidget from '../Components/fileUploadWidget';
+import { handleFileUpload, handleUserMessageSubmit } from '../Chatbot/chatbotLogic';
 import './chatbotPage.css';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
     { text: 'Hello! How can I help you today?', fromBot: true },
-    { text: 'Please upload a file using the widget below:', fromBot: true }
+    { text: 'Please upload a file to get started', fromBot: true }
   ]);
   const [userMessage, setUserMessage] = useState('');
+  const [files, setFiles] = useState([]);
 
-  const handleFileUpload = (files) => {
-    const acceptedFormats = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-    Array.from(files).forEach(file => {
-      if (acceptedFormats.includes(file.type)) {
-        setMessages(prevMessages => [
-          ...prevMessages,
-          { text: `Successfully uploaded ${file.name}`, fromBot: true }
-        ]);
-      } else {
-        setMessages(prevMessages => [
-          ...prevMessages,
-          { text: `Failed to upload ${file.name}: Unsupported format`, fromBot: true }
-        ]);
-      }
-    });
+  const handleFileChange = (files) => {
+    handleFileUpload(files, setMessages, setFiles);
   };
 
   const handleUserMessageChange = (e) => {
     setUserMessage(e.target.value);
   };
 
-  const handleUserMessageSubmit = (e) => {
+  const handleUserMessageSubmitWrapper = (e) => {
     e.preventDefault();
-    if (userMessage.trim()) {
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { text: userMessage, fromBot: false }
-      ]);
-      setUserMessage('');
-    }
+    handleUserMessageSubmit(userMessage, setMessages, setUserMessage, files);
   };
 
   return (
@@ -53,8 +35,8 @@ const Chatbot = () => {
           </div>
         ))}
       </div>
-      <FileUploadWidget handleFileUpload={handleFileUpload} />
-      <form onSubmit={handleUserMessageSubmit} className="message-form">
+      <form onSubmit={handleUserMessageSubmitWrapper} className="message-form">
+        <FileUploadWidget handleFileUpload={handleFileChange} />
         <input
           type="text"
           value={userMessage}

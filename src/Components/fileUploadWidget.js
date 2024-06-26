@@ -19,6 +19,7 @@ const FileUploadWidget = ({ handleFileUpload }) => {
         type="file"
         multiple
         onChange={handleFileChange}
+        style={{ display: 'none' }}
       />
     </div>
   );
