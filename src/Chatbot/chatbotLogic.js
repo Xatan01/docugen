@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // src/chatbotLogic.js
 export const acceptedFormats = [
   'application/pdf',
@@ -24,7 +26,7 @@ export const handleFileUpload = (files, setMessages, setFiles) => {
   setFiles(prevFiles => [...prevFiles, ...newFiles]);
 };
 
-export const handleUserMessageSubmit = (userMessage, setMessages, setUserMessage, files) => {
+export const handleUserMessageSubmit = async (userMessage, setMessages, setUserMessage, files) => {
   setMessages(prevMessages => [
     ...prevMessages,
     { text: userMessage, fromBot: false }
@@ -40,7 +42,29 @@ export const handleUserMessageSubmit = (userMessage, setMessages, setUserMessage
       ...prevMessages,
       { text: 'Processing files, please wait.', fromBot: true }
     ]);
-    // Call your backend API to analyze the files here
+
+    try {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+
+      const response = await axios.post('/analyze', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: `Analysis results: ${JSON.stringify(response.data)}`, fromBot: true }
+      ]);
+    } catch (error) {
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: `Error processing files: ${error.message}`, fromBot: true }
+      ]);
+    }
   }
 
   setUserMessage('');
