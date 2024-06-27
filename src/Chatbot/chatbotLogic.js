@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-// src/chatbotLogic.js
 export const acceptedFormats = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/docx'
+  'application/msword'
 ];
 
 export const handleFileUpload = (files, setMessages, setFiles) => {
@@ -13,7 +12,7 @@ export const handleFileUpload = (files, setMessages, setFiles) => {
     if (acceptedFormats.includes(file.type)) {
       setMessages(prevMessages => [
         ...prevMessages,
-        { text: `Successfully uploaded ${file.name}, please enter done when all files are uploaded`, fromBot: true }
+        { text: `Successfully uploaded ${file.name}, please enter 'done' when all files are uploaded`, fromBot: true }
       ]);
       newFiles.push(file);
     } else {
