@@ -1,7 +1,7 @@
-// src/Chatbot.js
+// src/Pages/chatbotPage.js
 import React, { useState } from 'react';
 import FileUploadWidget from '../Components/fileUploadWidget';
-import { handleFileUpload, handleUserMessageSubmit } from '../Chatbot/chatbotLogic';
+import { handleFileUpload, handleUserMessageSubmit, generateDocument } from '../Chatbot/chatbotLogic';
 import './chatbotPage.css';
 
 const Chatbot = () => {
@@ -11,6 +11,8 @@ const Chatbot = () => {
   ]);
   const [userMessage, setUserMessage] = useState('');
   const [files, setFiles] = useState([]);
+  const [documentStructure, setDocumentStructure] = useState(null);
+  const [userInputs, setUserInputs] = useState({});
 
   const handleFileChange = (files) => {
     handleFileUpload(files, setMessages, setFiles);
@@ -22,7 +24,18 @@ const Chatbot = () => {
 
   const handleUserMessageSubmitWrapper = (e) => {
     e.preventDefault();
-    handleUserMessageSubmit(userMessage, setMessages, setUserMessage, files);
+    handleUserMessageSubmit(userMessage, setMessages, setUserMessage, files, setDocumentStructure);
+  };
+
+  const handleInputChange = (section, value) => {
+    setUserInputs(prevInputs => ({
+      ...prevInputs,
+      [section]: value
+    }));
+  };
+
+  const handleGenerateDocument = () => {
+    generateDocument(documentStructure, userInputs, setMessages);
   };
 
   return (
@@ -35,6 +48,23 @@ const Chatbot = () => {
           </div>
         ))}
       </div>
+      {documentStructure && (
+        <div className="document-structure">
+          <h2>Document Structure</h2>
+          {Object.entries(documentStructure).map(([section, description]) => (
+            <div key={section} className="input-section">
+              <label htmlFor={section}>{section}</label>
+              <textarea
+                id={section}
+                value={userInputs[section] || ''}
+                onChange={(e) => handleInputChange(section, e.target.value)}
+                placeholder={description}
+              />
+            </div>
+          ))}
+          <button onClick={handleGenerateDocument}>Generate Document</button>
+        </div>
+      )}
       <form onSubmit={handleUserMessageSubmitWrapper} className="message-form">
         <FileUploadWidget handleFileUpload={handleFileChange} />
         <input
