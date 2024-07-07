@@ -1,12 +1,12 @@
-/* src/Chatbot.css */
 .chatbot-container {
-  text-align: center;
+  text-align: left;
   background: white;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-  width: 500px;
-  height: 600px;
+  width: 80%;
+  max-width: 800px;
+  height: 80vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -69,4 +69,49 @@
 
 .message-submit-button:hover {
   background-color: #4caf8b;
+}
+
+.document-structure {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.nested-section {
+  margin-left: 20px;
+  border-left: 1px solid #ccc;
+  padding-left: 10px;
+}
+
+.input-section {
+  margin-bottom: 15px;
+}
+
+.input-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.input-section textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.array-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+h2, h3, h4 {
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
