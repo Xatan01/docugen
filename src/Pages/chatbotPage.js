@@ -39,6 +39,32 @@ const ChatbotPage = () => {
 
   const camelToTitleCase = (str) => str.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
 
+  const addItem = (path) => {
+    setDocumentStructure(prevStructure => {
+      const newStructure = { ...prevStructure };
+      const keys = path.split('.');
+      let current = newStructure;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]].push({ ...current[keys[keys.length - 1]][0] });
+      return newStructure;
+    });
+  };
+
+  const deleteItem = (path, index) => {
+    setDocumentStructure(prevStructure => {
+      const newStructure = { ...prevStructure };
+      const keys = path.split('.');
+      let current = newStructure;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]].splice(index, 1);
+      return newStructure;
+    });
+  };
+
   const renderDocumentStructure = (structure, path = '') => Object.entries(structure).map(([key, value]) => {
     const fullPath = path ? `${path}.${key}` : key;
     const titleCaseKey = camelToTitleCase(key);
@@ -49,10 +75,14 @@ const ChatbotPage = () => {
           <h3>{titleCaseKey}</h3>
           {value.map((item, index) => (
             <div key={`${fullPath}.${index}`} className="array-item">
-              <h4>Item {index + 1}</h4>
+              <div className="array-item-header">
+                <h4>Item {index + 1}</h4>
+                <button onClick={() => deleteItem(fullPath, index)} className="delete-button">Delete</button>
+              </div>
               {renderDocumentStructure(item, `${fullPath}.${index}`)}
             </div>
           ))}
+          <button onClick={() => addItem(fullPath)} className="add-button">Add {titleCaseKey}</button>
         </div>
       );
     } else if (typeof value === 'object' && value !== null) {
