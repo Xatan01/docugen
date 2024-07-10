@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FileUploadWidget from '../Components/fileUploadWidget';
 import { handleFileUpload, handleUserMessageSubmit, generateDocument } from '../Chatbot/chatbotLogic';
 import './chatbotPage.css';
 
 const ChatbotPage = () => {
+  // State declarations
   const [messages, setMessages] = useState([
     { text: 'Hello! How can I help you today?', fromBot: true },
     { text: 'Please upload a file to get started.', fromBot: true }
@@ -13,15 +14,29 @@ const ChatbotPage = () => {
   const [documentStructure, setDocumentStructure] = useState(null);
   const [userInputs, setUserInputs] = useState({});
 
+  // Ref to store the original structure
+  const originalStructureRef = useRef(null);
+
+  // Effect to set the original structure
+  useEffect(() => {
+    if (documentStructure && !originalStructureRef.current) {
+      originalStructureRef.current = JSON.parse(JSON.stringify(documentStructure));
+    }
+  }, [documentStructure]);
+
+  // Handler for file uploads
   const handleFileChange = (files) => handleFileUpload(files, setMessages, setFiles);
 
+  // Handler for user message input
   const handleUserMessageChange = (e) => setUserMessage(e.target.value);
 
+  // Handler for user message submission
   const handleUserMessageSubmitWrapper = (e) => {
     e.preventDefault();
     handleUserMessageSubmit(userMessage, setMessages, setUserMessage, files, setDocumentStructure);
   };
 
+  // Handler for input changes in the document structure
   const handleInputChange = (path, value) => {
     setUserInputs(prevInputs => {
       const newInputs = { ...prevInputs };
@@ -35,28 +50,57 @@ const ChatbotPage = () => {
     });
   };
 
+  // Handler for generating the document
   const handleGenerateDocument = () => generateDocument(documentStructure, userInputs, setMessages);
 
+  // Helper function to convert camelCase to Title Case
   const camelToTitleCase = (str) => str.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
 
+  // Function to add an item to an array in the document structure
   const addItem = (path) => {
-    setDocumentStructure(prevStructure => {
-      const newStructure = { ...prevStructure };
+    setDocumentStructure((prevStructure) => {
+      const newStructure = JSON.parse(JSON.stringify(prevStructure)); // Deep clone the structure
       const keys = path.split('.');
       let current = newStructure;
+
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
       }
-      current[keys[keys.length - 1]].push({ ...current[keys[keys.length - 1]][0] });
+
+      const lastKey = keys[keys.length - 1];
+      const firstItem = current[lastKey][0];
+
+      if (firstItem) {
+        // Create a new object with the same structure as the first item, but with empty values
+        const newItem = Object.keys(firstItem).reduce((acc, key) => {
+          acc[key] = Array.isArray(firstItem[key]) ? [] : '';
+          return acc;
+        }, {});
+        current[lastKey].push(newItem);
+      } else if (originalStructureRef.current) {
+        let originalItem = originalStructureRef.current;
+        keys.forEach((key) => {
+          originalItem = originalItem[key];
+        });
+        // Create a new object with the same structure as the original item, but with empty values
+        const newItem = Object.keys(originalItem[0]).reduce((acc, key) => {
+          acc[key] = Array.isArray(originalItem[0][key]) ? [] : '';
+          return acc;
+        }, {});
+        current[lastKey].push(newItem);
+      }
+
       return newStructure;
     });
   };
 
+  // Function to delete an item from an array in the document structure
   const deleteItem = (path, index) => {
     setDocumentStructure(prevStructure => {
       const newStructure = { ...prevStructure };
       const keys = path.split('.');
       let current = newStructure;
+
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
       }
@@ -65,6 +109,7 @@ const ChatbotPage = () => {
     });
   };
 
+  // Function to render the document structure recursively
   const renderDocumentStructure = (structure, path = '') => Object.entries(structure).map(([key, value]) => {
     const fullPath = path ? `${path}.${key}` : key;
     const titleCaseKey = camelToTitleCase(key);
@@ -107,6 +152,7 @@ const ChatbotPage = () => {
     }
   });
 
+  // Component render
   return (
     <div className="chatbot-container">
       <h1 className="page-title">Document Generator</h1>
