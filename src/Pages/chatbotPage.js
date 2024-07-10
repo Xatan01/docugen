@@ -1,4 +1,3 @@
-// src/Pages/chatbotPage.js
 import React, { useState } from 'react';
 import FileUploadWidget from '../Components/fileUploadWidget';
 import { handleFileUpload, handleUserMessageSubmit, generateDocument } from '../Chatbot/chatbotLogic';
@@ -30,7 +29,7 @@ const ChatbotPage = () => {
       keys.reduce((acc, key, idx) => {
         if (idx === keys.length - 1) acc[key] = value;
         else acc[key] = acc[key] || {};
-        return acc[key];
+        return acc;
       }, newInputs);
       return newInputs;
     });
@@ -80,32 +79,38 @@ const ChatbotPage = () => {
 
   return (
     <div className="chatbot-container">
-      <h1>Document Generator</h1>
-      <div className="chat-window">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.fromBot ? 'bot' : 'user'}`}>
-            <span className="sender">{msg.fromBot ? 'Bot: ' : 'User: '}</span>{msg.text}
+      <h1 className="page-title">Document Generator</h1>
+      <div className="content-wrapper">
+        <div className="chat-section">
+          <div className="chat-window">
+            {messages.map((msg, index) => (
+              <div key={index} className={`message ${msg.fromBot ? 'bot' : 'user'}`}>
+                <span className="sender">{msg.fromBot ? 'Bot: ' : 'User: '}</span>{msg.text}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      {documentStructure && (
-        <div className="document-structure">
-          <h2>Document Structure</h2>
-          {renderDocumentStructure(documentStructure)}
-          <button onClick={handleGenerateDocument}>Generate Document</button>
+          <form onSubmit={handleUserMessageSubmitWrapper} className="message-form">
+            <FileUploadWidget handleFileUpload={handleFileChange} />
+            <input
+              type="text"
+              value={userMessage}
+              onChange={handleUserMessageChange}
+              placeholder="Type a message..."
+              className="message-input"
+            />
+            <button type="submit" className="message-submit-button">Send</button>
+          </form>
         </div>
-      )}
-      <form onSubmit={handleUserMessageSubmitWrapper} className="message-form">
-        <FileUploadWidget handleFileUpload={handleFileChange} />
-        <input
-          type="text"
-          value={userMessage}
-          onChange={handleUserMessageChange}
-          placeholder="Type a message..."
-          className="message-input"
-        />
-        <button type="submit" className="message-submit-button">Send</button>
-      </form>
+        {documentStructure && (
+          <div className="document-structure">
+            <h2>Document Structure</h2>
+            <div className="structure-content">
+              {renderDocumentStructure(documentStructure)}
+            </div>
+            <button onClick={handleGenerateDocument} className="generate-button">Generate Document</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
