@@ -1,7 +1,6 @@
 // src/Chatbot/chatbotLogic.js
 import axios from 'axios';
 
-// Define the base URL for your backend API
 const API_BASE_URL = 'http://localhost:5000';
 
 export const acceptedFormats = [
@@ -11,19 +10,19 @@ export const acceptedFormats = [
 ];
 
 export const handleFileUpload = (files, setMessages, setFiles) => {
-  const newFiles = [];
-  Array.from(files).forEach(file => {
+  const newFiles = Array.from(files).filter(file => {
     if (acceptedFormats.includes(file.type)) {
       setMessages(prevMessages => [
         ...prevMessages,
-        { text: `Successfully uploaded ${file.name}, please enter 'done' when all files are uploaded`, fromBot: true }
+        { text: `Successfully uploaded ${file.name}.`, fromBot: true }
       ]);
-      newFiles.push(file);
+      return true;
     } else {
       setMessages(prevMessages => [
         ...prevMessages,
         { text: `Failed to upload ${file.name}: Unsupported format`, fromBot: true }
       ]);
+      return false;
     }
   });
   setFiles(prevFiles => [...prevFiles, ...newFiles]);
@@ -35,7 +34,7 @@ export const handleUserMessageSubmit = async (userMessage, setMessages, setUserM
     { text: userMessage, fromBot: false }
   ]);
 
-  if (files.length === 0) {
+  if (!files.length) {
     setMessages(prevMessages => [
       ...prevMessages,
       { text: 'Please upload a file to get started.', fromBot: true }
@@ -48,27 +47,17 @@ export const handleUserMessageSubmit = async (userMessage, setMessages, setUserM
 
     try {
       const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
-      });
+      files.forEach(file => formData.append('files', file));
 
       const response = await axios.post(`${API_BASE_URL}/analyze`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Assuming the response.data contains the document structure
       setDocumentStructure(response.data);
-
       setMessages(prevMessages => [
         ...prevMessages,
         { text: 'Analysis complete. Here is the document structure:', fromBot: true },
-        { text: JSON.stringify(response.data, null, 2), fromBot: true }
-      ]);
-
-      setMessages(prevMessages => [
-        ...prevMessages,
+        { text: JSON.stringify(response.data, null, 2), fromBot: true },
         { text: 'Please provide content for each section of the document.', fromBot: true }
       ]);
     } catch (error) {
@@ -78,7 +67,6 @@ export const handleUserMessageSubmit = async (userMessage, setMessages, setUserM
       ]);
     }
   }
-
   setUserMessage('');
 };
 
@@ -86,7 +74,7 @@ export const generateDocument = async (documentStructure, userInputs, setMessage
   try {
     const response = await axios.post(`${API_BASE_URL}/generate`, {
       structure: documentStructure,
-      userInputs: userInputs
+      userInputs
     });
 
     setMessages(prevMessages => [
@@ -94,12 +82,6 @@ export const generateDocument = async (documentStructure, userInputs, setMessage
       { text: 'Document generated successfully!', fromBot: true },
       { text: 'You can now download the document.', fromBot: true }
     ]);
-
-    // Here you would typically handle the document download
-    // This could involve creating a Blob from the response data and creating a download link
-    // For simplicity, we're just logging the response for now
-    console.log('Generated document:', response.data);
-
   } catch (error) {
     setMessages(prevMessages => [
       ...prevMessages,
