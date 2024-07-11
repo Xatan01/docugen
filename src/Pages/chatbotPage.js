@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import FileUploadWidget from '../Components/fileUploadWidget';
-import { handleFileUpload, handleUserMessageSubmit, generateDocument } from '../Chatbot/chatbotLogic';
 import './chatbotPage.css';
+
+const API_BASE_URL = 'http://localhost:5000';
 
 const ChatbotPage = () => {
   const [messages, setMessages] = useState([
@@ -12,7 +13,7 @@ const ChatbotPage = () => {
   const [files, setFiles] = useState([]);
   const [documentStructure, setDocumentStructure] = useState(null);
   const [userInputs, setUserInputs] = useState({});
-
+  const [originalFileType, setOriginalFileType] = useState(null);
   const originalStructureRef = useRef(null);
 
   useEffect(() => {
@@ -43,13 +44,81 @@ const ChatbotPage = () => {
     }
   }, [documentStructure]);
 
-  const handleFileChange = (files) => handleFileUpload(files, setMessages, setFiles);
+  const handleFileUpload = (files) => {
+    const acceptedFormats = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ];
 
-  const handleUserMessageChange = (e) => setUserMessage(e.target.value);
+    const newFiles = Array.from(files).filter(file => {
+      if (acceptedFormats.includes(file.type)) {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: `Successfully uploaded ${file.name}.`, fromBot: true }
+        ]);
+        return true;
+      } else {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: `Failed to upload ${file.name}: Unsupported format`, fromBot: true }
+        ]);
+        return false;
+      }
+    });
+    setFiles(prevFiles => [...prevFiles, ...newFiles]);
+    if (newFiles.length > 0) {
+      setOriginalFileType(newFiles[0].type);
+    }
+  };
 
-  const handleUserMessageSubmitWrapper = (e) => {
+  const handleUserMessageSubmit = async (e) => {
     e.preventDefault();
-    handleUserMessageSubmit(userMessage, setMessages, setUserMessage, files, setDocumentStructure);
+    setMessages(prevMessages => [
+      ...prevMessages,
+      { text: userMessage, fromBot: false }
+    ]);
+
+    if (!files.length) {
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: 'Please upload a file to get started.', fromBot: true }
+      ]);
+    } else if (userMessage.trim().toLowerCase() === 'done') {
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: 'Processing files, please wait.', fromBot: true }
+      ]);
+
+      try {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+
+        const response = await fetch(`${API_BASE_URL}/analyze`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setDocumentStructure(result);
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: 'Analysis complete. Here is the document structure:', fromBot: true },
+          { text: JSON.stringify(result, null, 2), fromBot: true },
+          { text: 'Please provide content for each section of the document.', fromBot: true }
+        ]);
+      } catch (error) {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: `Error processing files: ${error.message}`, fromBot: true }
+        ]);
+      }
+    }
+    setUserMessage('');
   };
 
   const handleInputChange = (path, value) => {
@@ -68,9 +137,57 @@ const ChatbotPage = () => {
     });
   };
 
-  const handleGenerateDocument = () => generateDocument(documentStructure, userInputs, setMessages);
+  const handleGenerateDocument = async () => {
+    console.log('Generate Document button clicked');
+    console.log('Document Structure:', documentStructure);
+    console.log('User Inputs:', userInputs);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          structure: documentStructure,
+          userInputs: userInputs,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'generated_document.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: 'Document generated successfully! Check your downloads folder.', fromBot: true }
+      ]);
+    } catch (error) {
+      console.error('Error generating document:', error);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: `Error generating document: ${error.message}`, fromBot: true }
+      ]);
+    }
+  };
+  
 
-  const camelToTitleCase = (str) => str.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+  const camelToTitleCase = (str) => {
+    return str
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  };
 
   const addItem = (path) => {
     setDocumentStructure((prevStructure) => {
@@ -181,12 +298,12 @@ const ChatbotPage = () => {
               </div>
             ))}
           </div>
-          <form onSubmit={handleUserMessageSubmitWrapper} className="message-form">
-            <FileUploadWidget handleFileUpload={handleFileChange} />
+          <form onSubmit={handleUserMessageSubmit} className="message-form">
+            <FileUploadWidget handleFileUpload={handleFileUpload} />
             <input
               type="text"
               value={userMessage}
-              onChange={handleUserMessageChange}
+              onChange={(e) => setUserMessage(e.target.value)}
               placeholder="Type a message..."
               className="message-input"
             />

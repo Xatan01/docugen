@@ -1,4 +1,3 @@
-// src/FileUploadWidget.js
 import React from 'react';
 import { AiOutlinePaperClip } from 'react-icons/ai';
 import './fileUploadWidget.css';

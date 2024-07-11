@@ -69,19 +69,35 @@ export const handleUserMessageSubmit = async (userMessage, setMessages, setUserM
   setUserMessage('');
 };
 
-export const generateDocument = async (documentStructure, userInputs, setMessages) => {
+export const generateDocument = async (documentStructure, userInputs, originalFileType, setMessages) => {
+  console.log('generateDocument function called');
   try {
+    console.log('Sending request to backend');
     const response = await axios.post(`${API_BASE_URL}/generate`, {
       structure: documentStructure,
-      userInputs
+      userInputs,
+      originalFileType
+    }, {
+      responseType: 'arraybuffer'
     });
+    console.log('Received response from backend');
+
+    const blob = new Blob([response.data], { type: response.headers['content-type'] });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'generated_document' + (originalFileType.includes('word') ? '.docx' : '.pdf'));
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
 
     setMessages(prevMessages => [
       ...prevMessages,
       { text: 'Document generated successfully!', fromBot: true },
-      { text: 'You can now download the document.', fromBot: true }
+      { text: 'The document has been downloaded to your device.', fromBot: true }
     ]);
   } catch (error) {
+    console.error('Error generating document:', error);
     setMessages(prevMessages => [
       ...prevMessages,
       { text: `Error generating document: ${error.message}`, fromBot: true }
