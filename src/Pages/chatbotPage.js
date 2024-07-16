@@ -246,7 +246,7 @@ const ChatbotPage = () => {
     return Object.entries(structure).map(([key, value]) => {
       const fullPath = path ? `${path}.${key}` : key;
       const titleCaseKey = camelToTitleCase(key);
-
+  
       if (Array.isArray(value)) {
         return (
           <div key={fullPath} className="nested-section">
@@ -271,20 +271,25 @@ const ChatbotPage = () => {
           </div>
         );
       } else {
+        const isPlaceholder = value.startsWith('[') && value.endsWith(']');
+        const displayValue = getUserInputValue(fullPath);
+        const inputValue = isPlaceholder ? displayValue : (displayValue || value);
+  
         return (
           <div key={fullPath} className="input-section">
             <label htmlFor={fullPath}>{titleCaseKey}</label>
             <textarea
               id={fullPath}
-              value={getUserInputValue(fullPath)}
+              value={inputValue}
               onChange={(e) => handleInputChange(fullPath, e.target.value)}
-              placeholder={value}
+              placeholder={isPlaceholder ? value : ''}
             />
           </div>
         );
       }
     });
   };
+  
 
   return (
     <div className="chatbot-container">
