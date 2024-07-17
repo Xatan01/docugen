@@ -270,7 +270,7 @@ const ChatbotPage = () => {
             {renderDocumentStructure(value, fullPath)}
           </div>
         );
-      } else {
+      } else if (typeof value === 'string') { // Add type check for string
         const isPlaceholder = value.startsWith('[') && value.endsWith(']');
         const displayValue = getUserInputValue(fullPath);
         const inputValue = isPlaceholder ? displayValue : (displayValue || value);
@@ -286,9 +286,13 @@ const ChatbotPage = () => {
             />
           </div>
         );
+      } else {
+        console.warn(`Unexpected value type for ${fullPath}:`, value);
+        return null; // Handle unexpected value types gracefully
       }
     });
   };
+  
   
 
   return (
